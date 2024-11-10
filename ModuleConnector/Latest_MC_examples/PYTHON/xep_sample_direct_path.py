@@ -35,7 +35,7 @@ device_name = auto()[0]
 mc = pymoduleconnector.ModuleConnector(device_name)
 
 # Assume an X4M300/X4M200 module and try to enter XEP mode
-app = mc.get_x4m300()
+app = mc.get_x4m210()
 # Stop running application and set module in manual mode.
 try:
     app.set_sensor_mode(0x13, 0)  # Make sure no profile is running.
@@ -59,6 +59,8 @@ xep.x4driver_set_dac_max(2047)
 xep.x4driver_set_iterations(16)
 xep.x4driver_set_pulses_per_step(26)
 xep.x4driver_set_frame_area(-1, 2)
+
+xep.x4driver_set_downconversion(0)
 
 # Sample a frame
 xep.x4driver_set_fps(1)
