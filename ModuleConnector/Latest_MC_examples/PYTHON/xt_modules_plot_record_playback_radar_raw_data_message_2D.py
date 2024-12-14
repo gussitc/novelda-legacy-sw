@@ -115,21 +115,26 @@ def plot_radar_raw_data_message(xep, baseband=False):
         return frame
 
     def animate(i):
+        frame = read_frame()
         if baseband:
-            line.set_ydata(abs(read_frame()))  # update the data
+            line_real.set_ydata(frame.real)  # update the real part
+            line_imag.set_ydata(frame.imag)  # update the imaginary part
         else:
-            line.set_ydata(read_frame())
-        return line,
+            line.set_ydata(frame)
+        return line_real, line_imag if baseband else line,
 
     fig = plt.figure()
     fig.suptitle("Radar Raw Data")
     ax = fig.add_subplot(1, 1, 1)
     # keep graph in frame (FIT TO YOUR DATA), can be adjusted
-    ax.set_ylim(0 if baseband else -0.15, 0.15)
+    ax.set_ylim(-0.15, 0.15)
     frame = read_frame()
     if baseband:
-        frame = abs(frame)
-    line, = ax.plot(frame)
+        line_real, = ax.plot(frame.real, label='Real Part')
+        line_imag, = ax.plot(frame.imag, label='Imaginary Part')
+        ax.legend()
+    else:
+        line, = ax.plot(frame)
 
     ani = FuncAnimation(fig, animate, interval=1)
     try:
