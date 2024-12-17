@@ -92,20 +92,30 @@ def plot_matrix_fft(radar_matrix):
     freqs = np.fft.fftfreq(num_frames, sample_spacing)
     
     # Only keep positive frequencies and skip 0
+    # TODO: why do we remove 0? check pySDR for answer
     positive_freqs = freqs > 0
     radar_matrix_fft = radar_matrix_fft[positive_freqs, :]
     freqs = freqs[positive_freqs]
-    # remove freqs below 10Hz
-    freqs = freqs[freqs < 5]
+    # remove freqs below 2Hz
+    freqs = freqs[freqs < 2]
     radar_matrix_fft = radar_matrix_fft[:len(freqs), :]
     
+    abs_matrix = np.abs(radar_matrix_fft)
     plt.figure(figsize=(12, 6))
-    plt.imshow(np.abs(radar_matrix_fft), aspect='auto', extent=[0, radar_matrix.shape[1], freqs[0], freqs[-1]], origin='lower')
+    plt.imshow(abs_matrix, aspect='auto', extent=[0, radar_matrix.shape[1], freqs[0], freqs[-1]], origin='lower')
     plt.colorbar()
     plt.title("FFT of Radar Matrix")
     plt.xlabel("Bin")
     plt.ylabel("Frequency (Hz)")
     plt.grid()
+
+    max_value = np.max(abs_matrix)
+    max_index = np.argmax(abs_matrix)
+    row, col = np.unravel_index(max_index, abs_matrix.shape)
+    freq = freqs[row]
+    bin = col
+    print(f"Max value: {max_value} at freq {freq} and bin {bin}")
+    return freq, bin
 
 def save_radar_matrix(radar_matrix):
     np.save(FILENAME, radar_matrix)
@@ -127,23 +137,37 @@ def generate_radar_matrix(num_frames):
     return np.array(radar_frames)
 
 def main():
-    radar_matrix = load_radar_matrix()
+    num_frames = 200
+    # radar_matrix = load_radar_matrix()
+    radar_matrix = generate_radar_matrix(num_frames)
+    save_radar_matrix(radar_matrix)
+
     # if os.path.exists(FILENAME):
     #     user_input = input(f"{FILENAME} already exists. Do you want to delete it and generate a new radar matrix? (y/n): ")
     #     if user_input.lower() == 'y':
     #         os.remove(FILENAME)
-    #         radar_matrix = generate_radar_matrix(200)
+    #         radar_matrix = generate_radar_matrix(num_frames)
     #         save_radar_matrix(radar_matrix)
     #     else:
     #         radar_matrix = load_radar_matrix()
     # else:
-    #     radar_matrix = generate_radar_matrix(200)
+    #     radar_matrix = generate_radar_matrix(num_frames)
     #     save_radar_matrix(radar_matrix)
+
     # plot_radar_matrix(radar_matrix)
     # plot_single_bin(radar_matrix, 4)
-    plot_bin_fft(radar_matrix, 4)
-    plot_matrix_fft(radar_matrix)
-    # bin_fft = np.fft.fft(radar_matrix[:, 4])
+    
+    # only use first 50 samples
+    # radar_matrix = radar_matrix[:100, :]
+
+    # plot_radar_matrix(radar_matrix)
+    # plot_bin_fft(radar_matrix, 4)
+    # plot_single_bin(radar_matrix, 4)
+    # plot_single_bin(radar_matrix, 10)
+    # plot_bin_fft(radar_matrix, 10)
+    freq, bin = plot_matrix_fft(radar_matrix)
+    plot_bin_fft(radar_matrix, bin)
+
     plt.show()
 
     # calculate fft
