@@ -38,20 +38,21 @@ from pymoduleconnector.extras.x4_regmap_autogen import X4
 from pymoduleconnector.extras.auto import auto
 from pymoduleconnector.ids import *
 
+from pymoduleconnector.moduleconnectorwrapper import PyXEP, PyX4M210, XTS_SM_STOP, XTS_SM_MANUAL
 from xt_modules_print_info import *
 from xt_modules_record_playback_messages import *
 
 # User settings
 # the following settings are default X4 configuration for X4M200/X4M300 sensors
-x4_par_settings = {'downconversion': 0,  # 0: output rf data; 1: output baseband data
+x4_par_settings = {'downconversion': 1,  # 0: output rf data; 1: output baseband data
                    'dac_min': 949,
                    'dac_max': 1100,
                    'iterations': 16,
                    'tx_center_frequency': 3, #7.29GHz Low band: 3, 8.748GHz High band: 4
                    'tx_power': 2,
-                   'pulses_per_step': 300,
+                   'pulses_per_step': 87,
                    'frame_area_offset': 0.18,
-                   'frame_area': (-0.5, 5),
+                   'frame_area': (0.5, 2),
                    'fps': 17,
                    }
 
@@ -59,7 +60,7 @@ x4_par_settings = {'downconversion': 0,  # 0: output rf data; 1: output baseband
 def configure_x4(device_name, record=False, baseband=False, x4_settings=x4_par_settings):
     mc = pymoduleconnector.ModuleConnector(device_name)
     # Assume an X4M300/X4M200 module and try to enter XEP mode
-    app = mc.get_x4m200()
+    app: PyX4M210 = mc.get_x4m210()
     # Stop running application and set module in manual mode.
     try:
         app.set_sensor_mode(XTS_SM_STOP, 0)  # Make sure no profile is running.
@@ -82,7 +83,7 @@ def configure_x4(device_name, record=False, baseband=False, x4_settings=x4_par_s
     print('Set specific parameters')
     # Make sure that enable is set, X4 controller is programmed, ldos are enabled, and that the external oscillator has been enabled.
     xep.x4driver_init()
-    x4_settings['downconversion'] = int(baseband)
+    # x4_settings['downconversion'] = int(baseband)
     for variable, value in x4_settings.items():
         try:
             # if 'output_control' in variable:
@@ -102,12 +103,12 @@ def configure_x4(device_name, record=False, baseband=False, x4_settings=x4_par_s
     return xep
 
 
-def plot_radar_raw_data_message(xep, baseband=False):
+def plot_radar_raw_data_message(xep: PyXEP, baseband=False):
     def read_frame():
         """Gets frame data from module"""
         d = xep.read_message_data_float()  # wait until get data
         frame = np.array(d.data)
-        #print('frame length:' + str(len(frame)))
+        # print('frame length:' + str(len(frame)))
         # Convert the resulting frame to a complex array if downconversion is enabled
         if baseband:
             n = len(frame)
