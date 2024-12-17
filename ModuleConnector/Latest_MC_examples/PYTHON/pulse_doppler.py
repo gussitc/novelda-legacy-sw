@@ -3,6 +3,10 @@ from pymoduleconnector.extras.auto import auto
 from pymoduleconnector.extras.x4_regmap_autogen import X4
 import numpy as np
 import matplotlib.pyplot as plt
+from pymoduleconnector.moduleconnectorwrapper import PyXEP, PyX4M210
+
+SAVE_TO_FILE = True
+FILENAME = "radar_matrix.npy"
 
 x4_par_settings = {'downconversion': 1,  # 0: output rf data; 1: output baseband data
                    'dac_min': 949,
@@ -24,12 +28,16 @@ def plot_radar_matrix(radar_matrix):
     plt.ylabel("Bin")
     plt.show()
 
-def main():
+def save_radar_matrix(radar_matrix):
+    np.save(FILENAME, radar_matrix)
+
+def load_radar_matrix():
+    return np.load(FILENAME)
+
+def generate_radar_matrix(num_frames):
+    radar_frames = []
     device_name = auto()[0]
     xep = rc.configure_x4(device_name, x4_settings=x4_par_settings)
-    radar_frames = []
-    num_frames = 100
-
     while len(radar_frames) < num_frames:
         if xep.peek_message_data_float() > 0:
             d = xep.read_message_data_float()
@@ -37,14 +45,14 @@ def main():
             n = len(frame)
             frame = frame[:n//2] + 1j*frame[n//2:]
             radar_frames.append(frame)
+    return np.array(radar_frames)
 
-    print("Radar frames collected: ", len(radar_frames))
-    print("First frame: ", radar_frames[0])
-
-    # create matrix
-    radar_matrix = np.array(radar_frames)
-    print("Radar matrix shape: ", radar_matrix.shape)
-    print(f"Bin count: {xep.x4driver_get_frame_bin_count()}")
+def main():
+    try:
+        radar_matrix = load_radar_matrix()
+    except FileNotFoundError:
+        radar_matrix = generate_radar_matrix(200)
+        save_radar_matrix(radar_matrix)
 
     plot_radar_matrix(radar_matrix)
 
