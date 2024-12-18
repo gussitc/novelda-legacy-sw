@@ -1,25 +1,37 @@
 import numpy as np
 import matplotlib.pyplot as plt
-def plot_radar_matrix(radar_matrix):
-    plt.figure(figsize=(12, 6))
 
-    # Plot amplitude
-    plt.subplot(1, 2, 1)
-    plt.imshow(np.abs(radar_matrix).T, aspect='auto', origin='lower')
-    plt.colorbar()
-    plt.title("Radar Matrix Amplitude")
-    plt.xlabel("Frame")
-    plt.ylabel("Bin")
+def plot_radar_matrix(radar_matrix, ax=None):
+    if ax is None:
+        plt.figure(figsize=(12, 6))
 
-    # Plot phase
-    plt.subplot(1, 2, 2)
-    plt.imshow(np.angle(radar_matrix).T, aspect='auto', origin='lower')
-    plt.colorbar()
-    plt.title("Radar Matrix Phase")
-    plt.xlabel("Frame")
-    plt.ylabel("Bin")
+        # Plot amplitude
+        plt.subplot(1, 2, 1)
+        plt.imshow(np.abs(radar_matrix).T, aspect='auto', origin='lower')
+        plt.colorbar()
+        plt.title("Radar Matrix Amplitude")
+        plt.xlabel("Frame")
+        plt.ylabel("Bin")
 
-    plt.tight_layout()
+        # Plot phase
+        plt.subplot(1, 2, 2)
+        plt.imshow(np.angle(radar_matrix).T, aspect='auto', origin='lower')
+        plt.colorbar()
+        plt.title("Radar Matrix Phase")
+        plt.xlabel("Frame")
+        plt.ylabel("Bin")
+
+        plt.tight_layout()
+    else:
+        ax[0].imshow(np.abs(radar_matrix).T, aspect='auto', origin='lower')
+        ax[0].set_title("Radar Matrix Amplitude")
+        ax[0].set_xlabel("Frame")
+        ax[0].set_ylabel("Bin")
+
+        ax[1].imshow(np.angle(radar_matrix).T, aspect='auto', origin='lower')
+        ax[1].set_title("Radar Matrix Phase")
+        ax[1].set_xlabel("Frame")
+        ax[1].set_ylabel("Bin")
 
 def plot_single_bin(radar_matrix, bin):
 

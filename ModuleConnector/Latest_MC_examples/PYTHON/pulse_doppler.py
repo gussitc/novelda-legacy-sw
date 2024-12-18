@@ -5,7 +5,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pymoduleconnector.moduleconnectorwrapper import PyXEP, PyX4M210
 import os
-from plot import plot_radar_matrix, plot_single_bin, plot_bin_fft
+# from plot import plot_radar_matrix, plot_single_bin, plot_bin_fft
+import time
 
 SAVE_TO_FILE = True
 FILENAME = "radar_matrix.npy"
@@ -38,15 +39,36 @@ def get_fft_matrix(radar_matrix):
     radar_matrix_fft = radar_matrix_fft[:len(freqs), :]
     return radar_matrix_fft, freqs
 
-def plot_fft_matrix(fft_matrix, freqs):
+def plot_fft_matrix(fft_matrix, freqs, ax=None):
     abs_matrix = np.abs(fft_matrix)
-    plt.figure(figsize=(12, 6))
-    plt.imshow(abs_matrix, aspect='auto', extent=[0, abs_matrix.shape[1], freqs[0], freqs[-1]], origin='lower')
-    plt.colorbar()
-    plt.title("FFT of Radar Matrix")
-    plt.xlabel("Bin")
-    plt.ylabel("Frequency (Hz)")
-    plt.grid()
+    if ax is None:
+        plt.figure(figsize=(12, 6))
+        plt.imshow(abs_matrix, aspect='auto', extent=[0, abs_matrix.shape[1], freqs[0], freqs[-1]], origin='lower')
+        plt.colorbar()
+        plt.title("FFT of Radar Matrix")
+        plt.xlabel("Bin")
+        plt.ylabel("Frequency (Hz)")
+        plt.grid()
+    else:
+        ax.imshow(abs_matrix, aspect='auto', extent=[0, abs_matrix.shape[1], freqs[0], freqs[-1]], origin='lower')
+        ax.set_title("FFT of Radar Matrix")
+        ax.set_xlabel("Bin")
+        ax.set_ylabel("Frequency (Hz)")
+        ax.grid()
+
+def plot_radar_matrix(radar_matrix, ax=None):
+    if ax is None:
+        plt.figure(figsize=(12, 6))
+        plt.imshow(np.abs(radar_matrix).T, aspect='auto', origin='lower')
+        plt.colorbar()
+        plt.title("Radar Matrix Amplitude")
+        plt.xlabel("Frame")
+        plt.ylabel("Bin")
+    else:
+        ax.imshow(np.abs(radar_matrix).T, aspect='auto', origin='lower')
+        ax.set_title("Radar Matrix Amplitude")
+        ax.set_xlabel("Frame")
+        ax.set_ylabel("Bin")
 
 def get_fft_matrix_max(fft_matrix, freqs):
     abs_matrix = np.abs(fft_matrix)
@@ -79,20 +101,30 @@ def generate_radar_matrix(num_frames):
 
 def main():
     num_frames = 200
-    short_num_frames = 100
-    # radar_matrix = load_radar_matrix('data/easy2.npy')
+    fps = x4_par_settings['fps']
+    interval = 1.0 / fps
     radar_matrix = load_radar_matrix('data/hard2.npy')
-    # radar_matrix = generate_radar_matrix(num_frames)
-    # save_radar_matrix(radar_matrix)
 
-    radar_matrix = radar_matrix[:short_num_frames, :]
+    plt.ion()
+    fig, ax = plt.subplots(2, 1, figsize=(12, 12))
 
-    plot_radar_matrix(radar_matrix)
-    fft_matrix, freqs = get_fft_matrix(radar_matrix)
-    plot_fft_matrix(fft_matrix, freqs)
-    freq, bin = get_fft_matrix_max(fft_matrix, freqs)
-    plot_single_bin(radar_matrix, bin)
-    plot_bin_fft(fft_matrix, freqs, bin)
+    for i in range(num_frames):
+        frame = radar_matrix[i, :].reshape(1, -1)
+        if i == 0:
+            radar_frames = frame
+        else:
+            radar_frames = np.vstack((radar_frames, frame))
+
+        ax[0].clear()
+        plot_radar_matrix(radar_frames, ax=ax[0])
+
+        # fft_matrix, freqs = get_fft_matrix(radar_frames)
+        # ax[1].clear()
+        # plot_fft_matrix(fft_matrix, freqs, ax=ax[1])
+
+        plt.pause(interval)
+
+    plt.ioff()
     plt.show()
 
 if __name__ == "__main__":
