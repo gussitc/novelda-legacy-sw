@@ -120,8 +120,8 @@ def plot_matrix_fft(radar_matrix):
 def save_radar_matrix(radar_matrix):
     np.save(FILENAME, radar_matrix)
 
-def load_radar_matrix():
-    return np.load(FILENAME)
+def load_radar_matrix(file=FILENAME):
+    return np.load(file)
 
 def generate_radar_matrix(num_frames):
     radar_frames = []
@@ -138,43 +138,19 @@ def generate_radar_matrix(num_frames):
 
 def main():
     num_frames = 200
-    # radar_matrix = load_radar_matrix()
-    radar_matrix = generate_radar_matrix(num_frames)
-    save_radar_matrix(radar_matrix)
+    short_num_frames = 100
+    # radar_matrix = load_radar_matrix('data/easy2.npy')
+    radar_matrix = load_radar_matrix('data/hard2.npy')
+    # radar_matrix = generate_radar_matrix(num_frames)
+    # save_radar_matrix(radar_matrix)
 
-    # if os.path.exists(FILENAME):
-    #     user_input = input(f"{FILENAME} already exists. Do you want to delete it and generate a new radar matrix? (y/n): ")
-    #     if user_input.lower() == 'y':
-    #         os.remove(FILENAME)
-    #         radar_matrix = generate_radar_matrix(num_frames)
-    #         save_radar_matrix(radar_matrix)
-    #     else:
-    #         radar_matrix = load_radar_matrix()
-    # else:
-    #     radar_matrix = generate_radar_matrix(num_frames)
-    #     save_radar_matrix(radar_matrix)
+    radar_matrix = radar_matrix[:short_num_frames, :]
 
-    # plot_radar_matrix(radar_matrix)
-    # plot_single_bin(radar_matrix, 4)
-    
-    # only use first 50 samples
-    # radar_matrix = radar_matrix[:100, :]
-
-    # plot_radar_matrix(radar_matrix)
-    # plot_bin_fft(radar_matrix, 4)
-    # plot_single_bin(radar_matrix, 4)
-    # plot_single_bin(radar_matrix, 10)
-    # plot_bin_fft(radar_matrix, 10)
+    plot_radar_matrix(radar_matrix)
     freq, bin = plot_matrix_fft(radar_matrix)
+    plot_single_bin(radar_matrix, bin)
     plot_bin_fft(radar_matrix, bin)
-
     plt.show()
-
-    # calculate fft
-    # radar_matrix_fft = np.fft.fft(radar_matrix, axis=1)
-
-    # plot fft matrix
-    # plot_radar_matrix(radar_matrix_fft)
 
 if __name__ == "__main__":
     main()
