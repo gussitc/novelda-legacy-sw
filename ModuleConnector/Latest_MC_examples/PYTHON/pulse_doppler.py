@@ -10,7 +10,7 @@ import time
 
 SAVE_TO_FILE = True
 FILENAME = "radar_matrix.npy"
-FREQUENCY_CUTOFF = 5
+FREQUENCY_CUTOFF = 2
 
 x4_par_settings = {'downconversion': 1,  # 0: output rf data; 1: output baseband data
                    'dac_min': 949,
@@ -103,7 +103,11 @@ def main():
     num_frames = 200
     fps = x4_par_settings['fps']
     interval = 1.0 / fps
+    window_size = 100  # Number of frames to keep in view
+    # radar_matrix = load_radar_matrix('data/easy2.npy')
     radar_matrix = load_radar_matrix('data/hard2.npy')
+    fft_window = window_size
+    fft_interval = 7
 
     plt.ion()
     fig, ax = plt.subplots(2, 1, figsize=(12, 12))
@@ -114,10 +118,19 @@ def main():
             radar_frames = frame
         else:
             radar_frames = np.vstack((radar_frames, frame))
+        
+        if radar_frames.shape[0] > window_size:
+            radar_frames = radar_frames[-window_size:, :]
 
         ax[0].clear()
         plot_radar_matrix(radar_frames, ax=ax[0])
 
+        if radar_frames.shape[0] >= fft_window and i % fft_interval == 0:
+            fft_matrix, freqs = get_fft_matrix(radar_frames)
+            ax[1].clear()
+            plot_fft_matrix(fft_matrix, freqs, ax=ax[1])
+            freq, bin = get_fft_matrix_max(fft_matrix, freqs)
+            print(f"Freq: {freq}, Bin: {bin}")
         # fft_matrix, freqs = get_fft_matrix(radar_frames)
         # ax[1].clear()
         # plot_fft_matrix(fft_matrix, freqs, ax=ax[1])
