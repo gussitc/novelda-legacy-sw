@@ -8,6 +8,7 @@ import os
 
 SAVE_TO_FILE = True
 FILENAME = "radar_matrix.npy"
+FREQUENCY_CUTOFF = 5
 
 x4_par_settings = {'downconversion': 1,  # 0: output rf data; 1: output baseband data
                    'dac_min': 949,
@@ -26,7 +27,7 @@ def plot_radar_matrix(radar_matrix):
 
     # Plot amplitude
     plt.subplot(1, 2, 1)
-    plt.imshow(np.abs(radar_matrix).T, aspect='auto')
+    plt.imshow(np.abs(radar_matrix).T, aspect='auto', origin='lower')
     plt.colorbar()
     plt.title("Radar Matrix Amplitude")
     plt.xlabel("Frame")
@@ -34,7 +35,7 @@ def plot_radar_matrix(radar_matrix):
 
     # Plot phase
     plt.subplot(1, 2, 2)
-    plt.imshow(np.angle(radar_matrix).T, aspect='auto')
+    plt.imshow(np.angle(radar_matrix).T, aspect='auto', origin='lower')
     plt.colorbar()
     plt.title("Radar Matrix Phase")
     plt.xlabel("Frame")
@@ -62,20 +63,8 @@ def plot_single_bin(radar_matrix, bin):
 
     plt.tight_layout()
 
-def plot_bin_fft(radar_matrix, bin):
-    bin_fft = np.fft.fft(radar_matrix[:, bin])
-    num_frames = radar_matrix.shape[0]
-    sample_spacing = 1.0 / x4_par_settings['fps']
-    freqs = np.fft.fftfreq(num_frames, sample_spacing)
-    
-    # Only keep positive frequencies and skip 0
-    positive_freqs = freqs > 0
-    bin_fft = bin_fft[positive_freqs]
-    freqs = freqs[positive_freqs]
-    # remove freqs below 10Hz
-    freqs = freqs[freqs < 5]
-    bin_fft = bin_fft[:len(freqs)]
-    
+def plot_bin_fft(fft_matrix, freqs, bin):
+    bin_fft = fft_matrix[:, bin]
     plt.figure(figsize=(12, 6))
     plt.plot(freqs, np.abs(bin_fft))
     plt.title(f"FFT of Bin {bin}")
@@ -85,7 +74,7 @@ def plot_bin_fft(radar_matrix, bin):
     # increase x-axis granularity
     plt.xticks(np.arange(0, max(freqs), 0.5))
 
-def plot_matrix_fft(radar_matrix):
+def get_fft_matrix(radar_matrix):
     radar_matrix_fft = np.fft.fft(radar_matrix, axis=0)
     num_frames = radar_matrix.shape[0]
     sample_spacing = 1.0 / x4_par_settings['fps']
@@ -96,19 +85,22 @@ def plot_matrix_fft(radar_matrix):
     positive_freqs = freqs > 0
     radar_matrix_fft = radar_matrix_fft[positive_freqs, :]
     freqs = freqs[positive_freqs]
-    # remove freqs below 2Hz
-    freqs = freqs[freqs < 2]
+    freqs = freqs[freqs < FREQUENCY_CUTOFF]
     radar_matrix_fft = radar_matrix_fft[:len(freqs), :]
-    
-    abs_matrix = np.abs(radar_matrix_fft)
+    return radar_matrix_fft, freqs
+
+def plot_fft_matrix(fft_matrix, freqs):
+    abs_matrix = np.abs(fft_matrix)
     plt.figure(figsize=(12, 6))
-    plt.imshow(abs_matrix, aspect='auto', extent=[0, radar_matrix.shape[1], freqs[0], freqs[-1]], origin='lower')
+    plt.imshow(abs_matrix, aspect='auto', extent=[0, abs_matrix.shape[1], freqs[0], freqs[-1]], origin='lower')
     plt.colorbar()
     plt.title("FFT of Radar Matrix")
     plt.xlabel("Bin")
     plt.ylabel("Frequency (Hz)")
     plt.grid()
 
+def get_fft_matrix_max(fft_matrix, freqs):
+    abs_matrix = np.abs(fft_matrix)
     max_value = np.max(abs_matrix)
     max_index = np.argmax(abs_matrix)
     row, col = np.unravel_index(max_index, abs_matrix.shape)
@@ -147,9 +139,11 @@ def main():
     radar_matrix = radar_matrix[:short_num_frames, :]
 
     plot_radar_matrix(radar_matrix)
-    freq, bin = plot_matrix_fft(radar_matrix)
+    fft_matrix, freqs = get_fft_matrix(radar_matrix)
+    plot_fft_matrix(fft_matrix, freqs)
+    freq, bin = get_fft_matrix_max(fft_matrix, freqs)
     plot_single_bin(radar_matrix, bin)
-    plot_bin_fft(radar_matrix, bin)
+    plot_bin_fft(fft_matrix, freqs, bin)
     plt.show()
 
 if __name__ == "__main__":
