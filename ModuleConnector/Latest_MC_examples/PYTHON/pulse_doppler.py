@@ -1,3 +1,4 @@
+from webbrowser import get
 import radar_config as rc
 from pymoduleconnector.extras.auto import auto
 from pymoduleconnector.extras.x4_regmap_autogen import X4
@@ -99,54 +100,81 @@ def generate_radar_matrix(num_frames):
             radar_frames.append(frame)
     return np.array(radar_frames)
 
+def get_xep() -> PyXEP:
+    device_name = auto()[0]
+    xep = rc.configure_x4(device_name, x4_settings=x4_par_settings)
+    return xep
+
+def get_radar_frame_if_avail(xep: PyXEP):
+    if xep.peek_message_data_float() > 0:
+        d = xep.read_message_data_float()
+        frame = np.array(d.data)
+        n = len(frame)
+        frame = frame[:n//2] + 1j*frame[n//2:]
+        return frame
+    return None
+
 def main():
     num_frames = 200
     fps = x4_par_settings['fps']
     interval = 1.0 / fps
     window_size = 100  # Number of frames to keep in view
     # radar_matrix = load_radar_matrix('data/easy2.npy')
-    radar_matrix = load_radar_matrix('data/hard2.npy')
+    # radar_matrix = load_radar_matrix('data/hard2.npy')
 
     radar_matrix = generate_radar_matrix(num_frames)
 
     fft_window = window_size
-    fft_interval = 7
+    fft_interval = 10
     
-    plot_radar_matrix(radar_matrix)
-    derivative = np.diff(radar_matrix, axis=0)
-    plot_radar_matrix(derivative)
-    fft_matrix, freqs = get_fft_matrix(radar_matrix)
-    plot_fft_matrix(fft_matrix, freqs)
+    # plot_radar_matrix(radar_matrix)
+    # derivative = np.diff(radar_matrix, axis=0)
+    # plot_radar_matrix(derivative)
+    # fft_matrix, freqs = get_fft_matrix(radar_matrix)
+    # plot_fft_matrix(fft_matrix, freqs)
 
-    freq, bin = get_fft_matrix_max(fft_matrix, freqs)
-    print(f"Freq: {freq}, Bin: {bin}")
+    # freq, bin = get_fft_matrix_max(fft_matrix, freqs)
+    # print(f"Freq: {freq}, Bin: {bin}")
 
     # plt.ion()
     # fig, ax = plt.subplots(2, 1, figsize=(12, 12))
 
-    # for i in range(num_frames):
-    #     frame = radar_matrix[i, :].reshape(1, -1)
-    #     if i == 0:
-    #         radar_frames = frame
-    #     else:
-    #         radar_frames = np.vstack((radar_frames, frame))
-        
-    #     if radar_frames.shape[0] > window_size:
-    #         radar_frames = radar_frames[-window_size:, :]
+    xep = get_xep()
+    radar_frames = []
 
-    #     ax[0].clear()
-    #     plot_radar_matrix(radar_frames, ax=ax[0])
+    prev_time = time.time()
+    frame_count = 0
+    i = 0
 
-    #     if radar_frames.shape[0] >= fft_window and i % fft_interval == 0:
-    #         fft_matrix, freqs = get_fft_matrix(radar_frames)
-    #         ax[1].clear()
-    #         plot_fft_matrix(fft_matrix, freqs, ax=ax[1])
-    #         freq, bin = get_fft_matrix_max(fft_matrix, freqs)
-    #         print(f"Freq: {freq}, Bin: {bin}")
+    while True:
+        frame = get_radar_frame_if_avail(xep)
+        if frame is not None:
+            radar_frames.append(frame)
+            frame_count += 1
+            i += 1
+            if len(radar_frames) > window_size:
+                radar_frames = radar_frames[-window_size:]
 
-    #     plt.pause(interval)
-    # plt.ioff()
+            # ax[0].clear()
+            # plot_radar_matrix(np.array(radar_frames), ax=ax[0])
 
+            if len(radar_frames) >= fft_window and i % fft_interval == 0:
+                fft_matrix, freqs = get_fft_matrix(np.array(radar_frames))
+                # ax[1].clear()
+                # plot_fft_matrix(fft_matrix, freqs, ax=ax[1])
+                freq, bin = get_fft_matrix_max(fft_matrix, freqs)
+                print(f"Freq: {freq}, Bin: {bin}")
+
+            # plt.pause(interval)
+
+        # Calculate and print FPS
+        now = time.time()
+        if now - prev_time > 1:
+            print(f"FPS: {frame_count:.2f}")
+            frame_count = 0
+            prev_time = now
+
+    plt.ioff()
     plt.show()
 
 if __name__ == "__main__":
