@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pymoduleconnector.moduleconnectorwrapper import PyXEP, PyX4M210
 import os
-# from plot import plot_radar_matrix, plot_single_bin, plot_bin_fft
+from plot import plot_radar_matrix, plot_single_bin, plot_bin_fft
 import time
 
 SAVE_TO_FILE = True
@@ -20,7 +20,7 @@ x4_par_settings = {'downconversion': 1,  # 0: output rf data; 1: output baseband
                    'tx_power': 2,
                    'pulses_per_step': 87,
                    'frame_area_offset': 0.18,
-                   'frame_area': (0.5, 1),
+                   'frame_area': (0.5, 1.5),
                    'fps': 17,
                    }
 
@@ -106,38 +106,47 @@ def main():
     window_size = 100  # Number of frames to keep in view
     # radar_matrix = load_radar_matrix('data/easy2.npy')
     radar_matrix = load_radar_matrix('data/hard2.npy')
+
+    radar_matrix = generate_radar_matrix(num_frames)
+
     fft_window = window_size
     fft_interval = 7
+    
+    plot_radar_matrix(radar_matrix)
+    derivative = np.diff(radar_matrix, axis=0)
+    plot_radar_matrix(derivative)
+    fft_matrix, freqs = get_fft_matrix(radar_matrix)
+    plot_fft_matrix(fft_matrix, freqs)
 
-    plt.ion()
-    fig, ax = plt.subplots(2, 1, figsize=(12, 12))
+    freq, bin = get_fft_matrix_max(fft_matrix, freqs)
+    print(f"Freq: {freq}, Bin: {bin}")
 
-    for i in range(num_frames):
-        frame = radar_matrix[i, :].reshape(1, -1)
-        if i == 0:
-            radar_frames = frame
-        else:
-            radar_frames = np.vstack((radar_frames, frame))
+    # plt.ion()
+    # fig, ax = plt.subplots(2, 1, figsize=(12, 12))
+
+    # for i in range(num_frames):
+    #     frame = radar_matrix[i, :].reshape(1, -1)
+    #     if i == 0:
+    #         radar_frames = frame
+    #     else:
+    #         radar_frames = np.vstack((radar_frames, frame))
         
-        if radar_frames.shape[0] > window_size:
-            radar_frames = radar_frames[-window_size:, :]
+    #     if radar_frames.shape[0] > window_size:
+    #         radar_frames = radar_frames[-window_size:, :]
 
-        ax[0].clear()
-        plot_radar_matrix(radar_frames, ax=ax[0])
+    #     ax[0].clear()
+    #     plot_radar_matrix(radar_frames, ax=ax[0])
 
-        if radar_frames.shape[0] >= fft_window and i % fft_interval == 0:
-            fft_matrix, freqs = get_fft_matrix(radar_frames)
-            ax[1].clear()
-            plot_fft_matrix(fft_matrix, freqs, ax=ax[1])
-            freq, bin = get_fft_matrix_max(fft_matrix, freqs)
-            print(f"Freq: {freq}, Bin: {bin}")
-        # fft_matrix, freqs = get_fft_matrix(radar_frames)
-        # ax[1].clear()
-        # plot_fft_matrix(fft_matrix, freqs, ax=ax[1])
+    #     if radar_frames.shape[0] >= fft_window and i % fft_interval == 0:
+    #         fft_matrix, freqs = get_fft_matrix(radar_frames)
+    #         ax[1].clear()
+    #         plot_fft_matrix(fft_matrix, freqs, ax=ax[1])
+    #         freq, bin = get_fft_matrix_max(fft_matrix, freqs)
+    #         print(f"Freq: {freq}, Bin: {bin}")
 
-        plt.pause(interval)
+    #     plt.pause(interval)
+    # plt.ioff()
 
-    plt.ioff()
     plt.show()
 
 if __name__ == "__main__":
