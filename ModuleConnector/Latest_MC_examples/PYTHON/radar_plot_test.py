@@ -4,7 +4,7 @@ import time
 
 radar_matrix = np.load('data/hard2.npy')
 
-window_size = 11
+window_size = 20
 FPS = 17
 
 radar_window = radar_matrix[:window_size]
@@ -12,7 +12,7 @@ radar_window = radar_matrix[:window_size]
 prev_time = time.time()
 prev_frame = 0
 
-scale_factor = 50.0  # Adjust this value to increase or decrease the image size
+scale_factor = 20.0  # Adjust this value to increase or decrease the image size
 
 while True:
     radar_window = np.roll(radar_window, -1, axis=0)
@@ -42,20 +42,33 @@ while True:
     max_dim = max(height, width)
     new_size = int(max_dim * scale_factor)
     img = cv2.resize(img, (new_size, new_size), interpolation=cv2.INTER_NEAREST)
+    new_height = new_size
+    new_width = new_size
+    # axis_padding = 50
+
+    # Create a canvas to add axis labels
+    # canvas_height = new_height + axis_padding  # Extra space for x-axis labels
+    # canvas_width = new_width + axis_padding   # Extra space for y-axis labels
+    # canvas = np.zeros((canvas_height, canvas_width, 3), dtype=np.uint8)
+
+    # Place the image on the canvas
+    # canvas[axis_padding:axis_padding+new_height, axis_padding:axis_padding+new_width] = img
 
     # Add axis labels for bin and frame number
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    font_scale = 0.5
-    color = (255, 255, 255)
-    thickness = 1
+    # font = cv2.FONT_HERSHEY_SIMPLEX
+    # font_scale = 0.5
+    # color = (255, 255, 255)
+    # thickness = 1
 
     # Add bin labels (y-axis)
-    for i in range(0, new_size, int(new_size / 10)):
-        cv2.putText(img, f'{i}', (5, i + 15), font, font_scale, color, thickness, cv2.LINE_AA)
+    # for i in range(0, new_height, int(new_height / 10)):
+    #     label = f'{i // scale_factor:.0f}'
+    #     cv2.putText(canvas, label, (5, axis_padding + i + 15), font, font_scale, color, thickness, cv2.LINE_AA)
 
     # Add frame number labels (x-axis)
-    for i in range(0, new_size, int(new_size / 10)):
-        cv2.putText(img, f'{i}', (i, new_size - 5), font, font_scale, color, thickness, cv2.LINE_AA)
+    # for i in range(0, new_width, int(new_width / 10)):
+    #     label = f'{i // scale_factor:.0f}'
+    #     cv2.putText(canvas, label, (axis_padding + i, canvas_height - 5), font, font_scale, color, thickness, cv2.LINE_AA)
 
     # Display the image
     cv2.imshow('Radar Visualization', img)
