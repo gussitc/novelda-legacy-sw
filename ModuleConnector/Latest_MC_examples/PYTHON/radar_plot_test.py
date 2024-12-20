@@ -44,7 +44,7 @@ while True:
     img = np.float32(img)
 
     # Apply Viridis color map
-    img = cv2.applyColorMap(np.uint8(img * 255), cv2.COLORMAP_VIRIDIS)
+    img = cv2.applyColorMap(np.uint8(img * 255), cv2.COLORMAP_PARULA)
 
     # Resize the image to make it larger and square using the scale factor
     height, width, _ = img.shape
