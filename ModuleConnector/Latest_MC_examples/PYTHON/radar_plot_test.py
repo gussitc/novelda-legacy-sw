@@ -2,9 +2,9 @@ import numpy as np
 import cv2
 import time
 
-radar_matrix = np.load('data/hard2.npy')
+radar_matrix = np.load('data/easy2.npy')
 
-window_size = 20
+window_size = 50
 FPS = 17
 
 # radar_window = radar_matrix[:window_size]
@@ -13,7 +13,9 @@ radar_window = np.zeros((window_size, radar_matrix.shape[1]), dtype=np.complex12
 prev_time = time.time()
 prev_frame = 0
 
-scale_factor = 20.0  # Adjust this value to increase or decrease the image size
+# Adjust this value to increase or decrease the image size
+scale_factor = 500/window_size
+width_to_height_ratio = 2
 
 frame_index = 0
 
@@ -48,9 +50,10 @@ while True:
     height, width, _ = img.shape
     max_dim = max(height, width)
     new_size = int(max_dim * scale_factor)
-    img = cv2.resize(img, (new_size, new_size), interpolation=cv2.INTER_NEAREST)
     new_height = new_size
-    new_width = new_size
+    new_width = int(width_to_height_ratio*new_size)
+
+    img = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_NEAREST)
 
     # Display the image
     cv2.imshow('Radar Visualization', img)
