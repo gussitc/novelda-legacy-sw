@@ -19,34 +19,12 @@ width_to_height_ratio = 2
 
 frame_index = 0
 
-while True:
-    radar_window = np.roll(radar_window, -1, axis=0)
-    radar_window[-1] = radar_matrix[frame_index]
-    frame_index += 1
-    if frame_index >= radar_matrix.shape[0]:
-        break
-    # radar_window[-1] = radar_matrix[np.random.randint(0, radar_matrix.shape[0])]
-
-    # calculate fps each second
-    now = time.time()
-    elapsed_time = now - prev_time
-    if elapsed_time > 1:
-        fps = (prev_frame + 1) / elapsed_time
-        prev_frame = 0
-        prev_time = now
-        print(f"target fps: {FPS:.2f}, actual fps: {fps:.2f}")
-    else:
-        prev_frame += 1
-
-    # Normalize and convert to floating point image
-    img = np.abs(radar_window).T
+def plot_radar_window(window, scale_factor=1, width_to_height_ratio=1):
+    img = np.abs(window).T
     img = cv2.normalize(img, None, 0.0, 1.0, cv2.NORM_MINMAX)
     img = np.float32(img)
-
-    # Apply Viridis color map
     img = cv2.applyColorMap(np.uint8(img * 255), cv2.COLORMAP_PARULA)
 
-    # Resize the image to make it larger and square using the scale factor
     height, width, _ = img.shape
     max_dim = max(height, width)
     new_size = int(max_dim * scale_factor)
@@ -56,10 +34,44 @@ while True:
     img = cv2.resize(img, (new_width, new_height), interpolation=cv2.INTER_NEAREST)
 
     # Display the image
-    cv2.imshow('Radar Visualization', img)
+    cv2.imshow('Radar Window', img)
 
-    # Wait for the interval time and check for exit key
-    if cv2.waitKey(50) & 0xFF == ord('q'):
+    return img
+
+def plot_show(delay=1):
+    if cv2.waitKey(delay) & 0xFF == ord('q'):
+        exit()
+
+class FPSCounter:
+    def __init__(self):
+        self.prev_time = time.time()
+        self.prev_frame = 0
+
+    def update(self):
+        now = time.time()
+        elapsed_time = now - self.prev_time
+        if elapsed_time > 1:
+            fps = (self.prev_frame + 1) / elapsed_time
+            self.prev_frame = 0
+            self.prev_time = now
+            print(f"target fps: {FPS:.2f}, actual fps: {fps:.2f}")
+        else:
+            self.prev_frame += 1
+
+
+fps = FPSCounter()
+
+while True:
+    radar_window = np.roll(radar_window, -1, axis=0)
+    radar_window[-1] = radar_matrix[frame_index]
+    frame_index += 1
+    if frame_index >= radar_matrix.shape[0]:
         break
+
+    # calculate fps each second
+    fps.update()
+
+    plot_radar_window(radar_window, scale_factor, width_to_height_ratio)
+    plot_show(50)
 
 cv2.destroyAllWindows()
