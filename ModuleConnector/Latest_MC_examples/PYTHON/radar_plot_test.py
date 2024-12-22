@@ -20,7 +20,14 @@ FFT_INTERVAL = FPS # calculate FFT every second
 
 # Adjust this value to increase or decrease the image size
 scale_factor = 500/window_size
-width_to_height_ratio = 2
+width_to_height_ratio = 1.6
+
+# plot two large numbers as an image
+def show_numbers(bin, freq):
+    img = np.zeros((300, 600, 3), dtype=np.uint8)
+    cv2.putText(img, f"bin: {int(bin)}", (10, 100), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 255, 255), 2)
+    cv2.putText(img, f"freq: {freq:.2f}", (10, 200), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 255, 255), 2)
+    cv2.imshow('numbers', img)
 
 def plot_radar_window(window, scale_factor=1, width_to_height_ratio=1, name='radar'):
     img = np.abs(window).T
@@ -129,7 +136,7 @@ while True:
     radar_window = np.roll(radar_window, -1, axis=0)
     # radar_window[-1] = radar_matrix[frame_index]
     radar_window[-1] = frame
-    frame_index += 1
+    # frame_index += 1
     # if frame_index >= radar_matrix.shape[0]:
     #     break
 
@@ -140,7 +147,8 @@ while True:
     # this is true only once every second
     if fps_cntr.update():
         fft_matrix, freqs = get_fft_matrix(radar_window)
-        fft_matrix_max = get_fft_matrix_max(fft_matrix, freqs)
+        freq, bin = get_fft_matrix_max(fft_matrix, freqs)
+        show_numbers(bin, freq)
         plot_radar_window(fft_matrix.T, scale_factor*5, name='fft')
 
     plot_show(1)
