@@ -3,8 +3,8 @@ import sys
 from argparse import ArgumentParser
 
 import numpy as np
-import matplotlib.pyplot as plt
-from matplotlib.animation import FuncAnimation
+# import matplotlib.pyplot as plt
+# from matplotlib.animation import FuncAnimation
 
 import pymoduleconnector
 from pymoduleconnector import ModuleConnector
@@ -78,46 +78,46 @@ def configure_x4(device_name, record=False, baseband=False, x4_settings=x4_par_s
     return xep
 
 
-def plot_radar_raw_data_message(xep: PyXEP, baseband=False):
-    def read_frame():
-        """Gets frame data from module"""
-        d = xep.read_message_data_float()  # wait until get data
-        frame = np.array(d.data)
-        # print('frame length:' + str(len(frame)))
-        # Convert the resulting frame to a complex array if downconversion is enabled
-        if baseband:
-            n = len(frame)
-            frame = frame[:n//2] + 1j*frame[n//2:]
-        return frame
+# def plot_radar_raw_data_message(xep: PyXEP, baseband=False):
+#     def read_frame():
+#         """Gets frame data from module"""
+#         d = xep.read_message_data_float()  # wait until get data
+#         frame = np.array(d.data)
+#         # print('frame length:' + str(len(frame)))
+#         # Convert the resulting frame to a complex array if downconversion is enabled
+#         if baseband:
+#             n = len(frame)
+#             frame = frame[:n//2] + 1j*frame[n//2:]
+#         return frame
 
-    def animate(i):
-        frame = read_frame()
-        if baseband:
-            line_real.set_ydata(frame.real)  # update the real part
-            line_imag.set_ydata(frame.imag)  # update the imaginary part
-        else:
-            line.set_ydata(frame)
-        return line_real, line_imag if baseband else line,
+#     def animate(i):
+#         frame = read_frame()
+#         if baseband:
+#             line_real.set_ydata(frame.real)  # update the real part
+#             line_imag.set_ydata(frame.imag)  # update the imaginary part
+#         else:
+#             line.set_ydata(frame)
+#         return line_real, line_imag if baseband else line,
 
-    fig = plt.figure()
-    fig.suptitle("Radar Raw Data")
-    ax = fig.add_subplot(1, 1, 1)
-    # keep graph in frame (FIT TO YOUR DATA), can be adjusted
-    ax.set_ylim(-0.15, 0.15)
-    frame = read_frame()
-    if baseband:
-        line_real, = ax.plot(frame.real, label='Real Part')
-        line_imag, = ax.plot(frame.imag, label='Imaginary Part')
-        ax.legend()
-    else:
-        line, = ax.plot(frame)
+#     fig = plt.figure()
+#     fig.suptitle("Radar Raw Data")
+#     ax = fig.add_subplot(1, 1, 1)
+#     # keep graph in frame (FIT TO YOUR DATA), can be adjusted
+#     ax.set_ylim(-0.15, 0.15)
+#     frame = read_frame()
+#     if baseband:
+#         line_real, = ax.plot(frame.real, label='Real Part')
+#         line_imag, = ax.plot(frame.imag, label='Imaginary Part')
+#         ax.legend()
+#     else:
+#         line, = ax.plot(frame)
 
-    ani = FuncAnimation(fig, animate, interval=1)
-    try:
-        plt.show()
-    except:
-        print('Messages output finish!')
-    sys.exit(0)
+#     ani = FuncAnimation(fig, animate, interval=1)
+#     try:
+#         plt.show()
+#     except:
+#         print('Messages output finish!')
+#     sys.exit(0)
 
 
 def main():
